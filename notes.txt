@@ -1,0 +1,27 @@
+Networking
+    -Simply make a get request to a URL and feed the response to the HTML Parser
+
+    Error Handling:
+        -Check that the response is an html file
+        -Handle case of multiple html files
+
+HTML Parsing
+    -Only supports closed tags for now
+    -Return a tree of nodes
+    -Each node has an element name and a dictionary of attributes
+
+    Error Handling:
+        -If a closing tag doesn't match it's corresponding opening tag
+        -If a tag doesn't have a corresponding closing tag
+        -If the first element is not an html tag
+        -If the html tag's first child is not a head tag
+        -If the html tag's second child is not a body tag
+        -If the html tag has more than two children
+
+
+CSS Parsing
+    -
+
+HTML/CSS rendering
+    -Should be able to handle width, height, color, and some fonts
+    -Using tkinter but drawing mostly from scratch
