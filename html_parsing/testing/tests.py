@@ -1,4 +1,7 @@
+import sys
+sys.path.insert(0, '/Users/brandonhodges/Desktop/tiny_web_browser/')
 import os
+from html_parsing.html_parser import parse
 
 TEST_DIR = 'html_test_files/'
 
@@ -12,5 +15,6 @@ def load_file(filename):
     return contents
 
 if __name__ == '__main__':
-    print(load_file('test1.html'))
+    test1 = load_file('test1.html')
+    parse(test1)
 
