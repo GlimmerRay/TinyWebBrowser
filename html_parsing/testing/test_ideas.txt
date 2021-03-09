@@ -11,3 +11,18 @@ How do we handle whitespace inside brackets?
     </p >
     < /p>
     < d iv>
+
+If I remove the opening <html> tag from test1.html
+then my parser loops forever.  I need to fix that.
+I'm pretty sure it's because of the whitespace.
+
+We need to handle attributes
+
+We need an easier way to test
+
+We need to test the case where a closing tag doesn't match its
+corresponding opening tag.
+
+We need to handle the case where there is extra text after
+where the final tag should be. (Throw an error or just ignore it?)
+
