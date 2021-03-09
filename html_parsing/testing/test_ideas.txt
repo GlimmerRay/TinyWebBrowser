@@ -1,0 +1,13 @@
+<div>
+    Some text goes here
+    <p></p>
+</div>
+
+
+How do we handle whitespace inside brackets?
+
+    <  div>
+    <div >
+    </p >
+    < /p>
+    < d iv>
