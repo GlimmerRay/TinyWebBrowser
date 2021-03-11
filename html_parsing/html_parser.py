@@ -34,10 +34,11 @@ class TextNode:
         # stack it
     # else if closing tag
         # if matches top of stack
+            # elem = pop top of stack
             # if stack is not empty
-                # pop top of stack and add it to children of the previous element
+                #  add elem to children of the previous element
             # else
-                # return the final element
+                # return the elem
         # else
             # error
     # move i past the end of the tag
@@ -50,16 +51,18 @@ class TextNode:
 def parse(html):
     stack = []
     i = 0
+    while html[i].isspace(): # white space at the top of an html document is ignored
+        i += 1
     while True:
         elem, i = consume_tag(html, i, stack)
-        if elem != None:
+        if elem != None: # TODO: this seems odd
             return elem
         i = consume_text(html, i, stack)
 
 def consume_tag(html, i, stack):
-    if html[i] != '<':
+    if html[i] != '<': # consume_tag() assumes that i points to an open angled bracket
         raise Exception('html[i] must refer to an open angled bracket')
-    if html[i+1] == '/':
+    if html[i+1] == '/': # indicates a closing tag
         return consume_closing_tag(html, i, stack)
     return consume_opening_tag(html, i, stack)
 

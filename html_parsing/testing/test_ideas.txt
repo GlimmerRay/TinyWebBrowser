@@ -12,12 +12,6 @@ How do we handle whitespace inside brackets?
     < /p>
     < d iv>
 
-If I remove the opening <html> tag from test1.html
-then my parser loops forever.  I need to fix that.
-I'm pretty sure it's because of the whitespace.
-
-We need to handle attributes
-
 We need an easier way to test
 
 We need to test the case where a closing tag doesn't match its
@@ -33,8 +27,6 @@ We need to test the case where extra white space exists between attributes
 
 We need attributes to work with quotes as well as without quotes
 
-
-
 We need to handle the case where there is extra text after
 where the final tag should be. (Throw an error or just ignore it?)
 
@@ -42,4 +34,35 @@ Attributes take the form string1=string2 where string1 and string2 do
 not contain whitespace.  If they do we'll throw an error.  Also, attributes
 are delimited by whitespace.
 
+What if the first non-whitespace character of the file is not a '>'?
+
+What if the first tag is not named <html>?
+
+What if the head or body tags are omitted?
+
+What if one of the children of html is something other than body or head?
+
+What if an attribute key is not in our list of valid keys?
+
+Do we simply ignore anything that comes after the closing html tag?
+
 We need unit tests for a the little functions
+
+Need to handle non-closing tags.
+
+What if white space precedes '/' for closing tag?
+    -For now I'm just going to say that the inside of a tag must start
+    with either '/' or a valid tag name character
+
+What if a closing tag contains anything other than whitespace after its name?
+(For example if attributes are defined in a closing tag).
+
+What are the valid characters for a tag name?
+
+What are the valid characters for an attribute name?
+
+What are the valid characters for a value?
+
+(CHECK) If I remove the opening <html> tag from test1.html
+then my parser loops forever.  I need to fix that.
+I'm pretty sure it's because of the whitespace.
