@@ -1,0 +1,88 @@
+What is a module in Python?
+
+    Any .py file is a module
+
+Where does the interpreter initial search for imports?
+
+    The interpreter first searches in the current directory
+
+    So if I have the following code...
+
+        import game
+
+    ...then the interpreter will look for a file called game.py
+    in the current directory.  If it's not found then it will
+    loook in the built in modules.
+
+Why is there a .pyc file after I make an import?
+
+    A .pyc file is a compiled Python file.  So if I have
+    the following code...
+
+        import game
+    
+    ...and a .pyc file exists in the directory from which the
+    script was executed, then the .pyc file will run (this way
+    we can skip the compilation step.)
+
+How do I use an imported module?
+
+    If you want to use an imported module then you have to precede
+    the function with moduleo_name followed by a dot.  For example
+    if I import game and I want to call game's play_game function,
+    the I write the following code.
+
+        import game
+
+        game.play_game()
+
+What if I use the 'import from' syntax?
+
+    Then you don't have to precede function names by their module name.
+    Instead, you can just call them directly.
+
+        from game import play_game
+
+        play_game()
+
+    If you want to import everything from game then you would use the 
+    following syntax.
+
+        from game import *
+
+        play_game()
+
+    WARNING! If any objects from game have share a name with any objects
+    in the current file, then those names will now refer to the objects
+    in game, and you won't be able to use the objects in the current file.
+
+What happens if you import a module which imports another module
+which you've already imported?
+
+    The import will only initialize once.  Therefore
+    you don't have to worry about initializing a module twice
+
+How do I view all of the directories from which python makes its imports.
+
+    Just print sys.path, and it will all be there.  If you want to dynamically
+    add a directory to sys.path then you can simply append to it.  But be sure
+    to append before you actually make the import.
+
+    Remember, by default python searches first in the current directory, then
+    in the built in modules, then downloaded modules.  All of this is reflected
+    in sys.path
+
+How do you view all of the functions defined in a module?
+
+    import sys
+    print(dir(sys))
+
+How do you get more information about a module?
+
+    help(sys)
+
+
+
+
+
+    

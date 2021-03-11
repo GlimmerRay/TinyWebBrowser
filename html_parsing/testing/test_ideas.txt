@@ -23,6 +23,23 @@ We need an easier way to test
 We need to test the case where a closing tag doesn't match its
 corresponding opening tag.
 
+We need to test the case where a closing tag never appears
+
+We need to test the case where a right angled bracket never appears
+after a left angled bracket
+
+We need to test the case where extra white space exists between attributes
+(should still work)
+
+We need attributes to work with quotes as well as without quotes
+
+
+
 We need to handle the case where there is extra text after
 where the final tag should be. (Throw an error or just ignore it?)
 
+Attributes take the form string1=string2 where string1 and string2 do
+not contain whitespace.  If they do we'll throw an error.  Also, attributes
+are delimited by whitespace.
+
+We need unit tests for a the little functions

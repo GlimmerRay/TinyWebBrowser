@@ -9,6 +9,7 @@ HTML Parsing
     -Only supports closed tags for now
     -Return a tree of nodes
     -Each node has an element name and a dictionary of attributes
+    -Inline  elements not supported
 
     Error Handling:
         -If a closing tag doesn't match it's corresponding opening tag

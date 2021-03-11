@@ -15,11 +15,10 @@ def load_file(filename):
     return contents
 
 if __name__ == '__main__':
-    # assert consume_elem_name('<div>', 0) == ('div', 4)
-    # assert consume_elem_name('abcdefg<div>', 7) == ('div', 11)
-    # assert consume_elem_name('<fruit>', 0) == ('fruit', 6)
-    # assert consume_elem_name('abcdefg<fruit>', 7) == ('fruit', 13)
-    
+
+    html1 = "</div><div class=blue id=white>Some text</div>"
+    print(get_attributes(html1, 10))
+
     test1 = load_file('test1.html')
     dom = parse(test1)
     assert dom.name == 'html'
@@ -31,3 +30,5 @@ if __name__ == '__main__':
     assert len(dom.children[0].children[0].children) == 1
     assert dom.children[0].children[0].children[0].text == 'Document'
     assert len(dom.children[1].children) == 0
+
+    print(dom.children[0].children[0].attributes)

@@ -1,1 +1,5 @@
 Set up some tests for html parsing
+
+Research how to test for exceptions
+Research type hints
+Incorporate type hints
