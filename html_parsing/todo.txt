@@ -1,0 +1,1 @@
+Use setters for setting the attributes property

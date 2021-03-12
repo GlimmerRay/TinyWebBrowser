@@ -1,4 +1,5 @@
 import sys
+from collections import deque
 
 # name must be a string
 # attributes musst be a dictionary of strings mapping to strings
@@ -13,6 +14,27 @@ class ElementNode:
     def addChild(self, child):
         self.children.append(child)
     
+    def __eq__(self, other): # breadth-first tree traversal
+        self_queue = deque([self])
+        other_queue = deque([other])
+        while len(self_queue) > 0:
+            self_node = self_queue.popleft()
+            other_node = other_queue.popleft()
+            if isinstance(self_node, ElementNode) and isinstance(other_node, ElementNode):
+                if not (self_node.name == other_node.name and \
+                self_node.attributes == other_node.attributes and \
+                len(self_node.children) == len(other_node.children)):
+                    return False
+                for i in range(len(self_node.children)):
+                    self_queue.append(self_node.children[i])
+                    other_queue.append(other_node.children[i])
+            elif isinstance(self_node, TextNode) and isinstance(other_node, TextNode):
+                if not (self_node == other_node):
+                    return False
+            else: # Wrong types or unmatching types
+                return False
+        return True
+    
     def __repr__(self):
         return self.name
 
@@ -20,14 +42,22 @@ class TextNode:
     def __init__(self, text):
         self.text = text
     
+    def __eq__(self, other):
+        if not isinstance(other, TextNode):
+            return False
+        if not (self.text == other.text):
+            return False
+        return True
+    
     def __repr__(self):
         return self.text
-
-# consume tag
-# consume text
-# consume tag
-# consume text
-# ...
+#parse
+    # consume tag
+    # consume text
+    # consume tag
+    # consume text
+    # consume tag
+    # ...
 
 # consume tag
     # if opening tag
@@ -38,7 +68,7 @@ class TextNode:
             # if stack is not empty
                 #  add elem to children of the previous element
             # else
-                # return the elem
+                # return the elem (parsing is complete)
         # else
             # error
     # move i past the end of the tag

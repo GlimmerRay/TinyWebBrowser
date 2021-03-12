@@ -6,11 +6,70 @@
 
 How do we handle whitespace inside brackets?
 
-    <  div>
-    <div >
-    </p >
-    < /p>
-    < d iv>
+    < div> (should fail)
+    <div > (should fail)
+    < /p>  (should fail)
+    </p > (should fail)
+    <div class=name >
+
+How do we handle whitespace inside of text nodes?
+
+    White space at the right or left ends is removed.
+    Also a text node with white space only becomes the empty string.
+
+    <div>    </div> becomes <div></div>
+    <div>   abc</div> becomes <div>abc</div>
+    <div>abc   </div> becomes <div>abc</div>
+    <div>   abc   </div> becomes <div>abc</div>
+
+    <div>a    c</div> does not become <div>a c</div>
+
+Do attribute values need to be quoted?
+
+    They can be either quoted or unquoted
+
+    <div class="name"> (should pass)
+    <div class=name> (should pass)
+    Also, the above two ElementNodes should be equal
+
+    <div class='name'> (should fail)
+
+Which characters are valid for attribute values?
+
+    We'll just say letters, digits, and hyphens for now.
+    BUT we should abstract the valid character set for easy changing.
+
+    <div class="name> (should fail)
+    <div class='name> (should fail)
+    <div class=n@me> (should fail)
+
+    <div class=my-name> (should pass)
+
+How do we handle an angled bracket within text?
+
+    <div>And now we have proved that x>y</div>
+
+    (should fail because found > before reaching the end of the text node)
+    (remember, the end is marked by <)
+
+    <div>And now we have proved that x<y</div>
+    (should fail because < is found while reading a tag name and it is invalid character)
+
+How would we escape such an invalid character?
+
+    NEED TO RESEARCH
+
+
+
+
+
+
+
+
+
+
+
+
 
 We need an easier way to test
 
