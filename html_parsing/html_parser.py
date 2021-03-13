@@ -1,6 +1,19 @@
 import sys
 from collections import deque
 
+
+class WhitespaceError(Exception):
+    pass
+
+class UnclosedTagError(Exception):
+    pass
+
+class PreconditionError(Exception):
+    pass
+
+class UnmatchingTagError(Exception):
+    pass
+
 # name must be a string
 # attributes musst be a dictionary of strings mapping to strings
 # children must be a list of Nodes
@@ -92,8 +105,13 @@ def parse(html):
 def consume_tag(html, i, stack):
     if html[i] != '<': # consume_tag() assumes that i points to an open angled bracket
         raise Exception('html[i] must refer to an open angled bracket')
+    if html[i+1].isspace():
+        raise WhitespaceError()
     if html[i+1] == '/': # indicates a closing tag
-        return consume_closing_tag(html, i, stack)
+        tag_name, i = consume_closing_tag(html, i, stack)
+        if html[i] == ' ':
+            raise WhitespaceError()
+        return tag_name, i   
     return consume_opening_tag(html, i, stack)
 
 def consume_opening_tag(html, i, stack):
@@ -108,11 +126,9 @@ def consume_opening_tag(html, i, stack):
     return None, i
 
 def consume_closing_tag(html, i, stack):
-    if html[i] != '<':
-        raise Exception('html[i] must refer to an open angled bracket')
-    name, i = get_tag_name(html, i, open=False)
+    name, i = get_closing_tag_name(html, i, open=False)
     if name != stack[-1].name: # uh oh
-        raise Exception('tag pair does not match')
+        raise UnmatchingTagError('tag pair does not match')
     else: # we found a valid closing tag
         elem = stack.pop()
         if len(stack) == 0: # finished processing
@@ -121,21 +137,64 @@ def consume_closing_tag(html, i, stack):
             stack[-1].addChild(elem)
             return None, i
 
-# after this function runs, i should be pointed at either a ' ' or a '>'
-def get_tag_name(html, i, open):
+# a closing tag name is defined as a sequence of valid tag name characters
+# preced by a '<\' and followed by a '>'
+def get_closing_tag_name(html, i, open):
     if html[i] != '<':
-        raise Exception('html[i] must refer to an open angled bracket')
+        raise PreconditionError('get_closing_tag_name() requires that i \
+                                 be pointed at a \'>\' character')
+    if html[i+1] != '/':
+        raise PreconditionError('get_closing_tag_name() requires that i+1 \
+                                 be pointed at a \'/\' characer')
+    left, right = i+2, i+2
+    while html[right] != '>':
+        # TODO: incorporate ALL invalid characters into this code
+        if html[right].isspace():
+            # catches: </ div> </div > </d iv> </ >
+            raise WhitespaceError('No spaces allowed in closing tag.')
+        right += 1
+        if right >= len(html):
+            raise UnclosedTagError('Reached end of file before tag was closed.')
+    tag_name = html[left:right]
+    if tag_name == '':
+        # catches: </>
+        raise InvalidTagNameError('Tag name cannot be the empty string')
+    return tag_name, i
+    
+
+# an opening tag name is defined as a sequence of valid tag name characters
+# preceded by a '<' and followed by a ' ' or a '>'
+def get_opening_tag_name(html, i, open):
+    if html[i] != '<':
+        raise PreconditionError('get_opening_tag_name() requires that i \
+                                 be pointed at a \'>\' character')
     left, right = i+1, i+1
-    if not open:
-        left, right = left+1, right+1 # skip the slash
+    # either reach the end of the tag or the beginning of the attributes
     while html[right] != '>' and html[right] != ' ':
         right += 1
         if right >= len(html):
-            raise Exception('tag was never closed')
-    elem_name = html[left:right]
-    if elem_name == '':
-        raise Exception('element name can\'t be the empty string')
-    return elem_name, right
+            raise UnclosedTagError('Reached end of file before tag was closed.')
+    tag_name = html[left:right]
+    if tag_name == '':
+        # catches: <> < > < class=someclass>
+        raise InvalidTagNameError('Tag name cannot be the empty string')
+    return tag_name, i
+
+# # after this function runs, i should be pointed at either a ' ' or a '>'
+# def get_tag_name(html, i, open):
+#     if html[i] != '<':
+#         raise Exception('html[i] must refer to an open angled bracket')
+#     left, right = i+1, i+1
+#     if not open: # we're dealing w/ a closing tag
+#         left, right = left+1, right+1 # skip the slash
+#     while html[right] != '>' and html[right] != ' ':
+#         right += 1
+#         if right >= len(html):
+#             raise Exception('tag was never closed')
+#     elem_name = html[left:right]
+#     if elem_name == '':
+#         raise Exception('element name can\'t be the empty string')
+#     return elem_name, right
 
 def consume_text(html, i, stack):
     text, i = get_text(html, i)
@@ -171,12 +230,14 @@ def get_attributes(html, i):
 def get_attribute(html, i):
     if html[i] != ' ':
         raise Exception('get_attributes() expects i to be pointed at a space')
-    # i = skip_whitespace(html, i)
-    while html[i].isspace():
-        i += 1
+    if html[i+1].isspace() or html[i+1] == '>':
+        raise WhitespaceError()
     j = i
     while html[j] != '=':
         j += 1
+        if html[j].isspace():
+            print('x')
+            raise WhitespaceError('key name can\'t have a space in it')
     key = html[i:j]
     j += 1
     i = j

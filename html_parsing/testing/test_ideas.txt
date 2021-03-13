@@ -1,16 +1,19 @@
-<div>
-    Some text goes here
-    <p></p>
-</div>
 
+Note: These specifications can and will change!  I just need to get something defined
+so that I can code with clarity.
 
 How do we handle whitespace inside brackets?
 
-    < div> (should fail)
-    <div > (should fail)
-    < /p>  (should fail)
-    </p > (should fail)
-    <div class=name >
+    < div> (should fail) COMPLETE
+    <div > (should fail) COMPLETE
+    < /p>  (should fail) COMPLETE
+    </p > (should fail) COMPLETE
+    <div class=name > (should fail) COMPLETE
+
+    <div class=name id=ident> (should pass)
+    <div class=name  id=ident> (should fail) COMPLETE
+    <div class =name> (should fail) COMPLETE
+    <div class= name> (should fail) COMPLETE
 
 How do we handle whitespace inside of text nodes?
 
@@ -59,69 +62,109 @@ How would we escape such an invalid character?
 
     NEED TO RESEARCH
 
+What happens with the following?
+    <div>
+        Some text goes here
+        <p></p>
+    </div>
+
+    This is valid.  The first child of div is a TextNode and the second is an ElementNodes
+
+What about with this?
+
+    <div>I <span>love</span> to write parsers! (kind of)</div>
+    
+    Simple. 'I ' is the first child of div, the span is the second '  to write parsers! (kind of)'
+    is the third.
+
+    NOTE! making sure the leading space before the second TextNode is preserved.
+
+Does the first tag have to be <html>?
+
+    Yes!
+
+Does the first child of <html> have to be head?
+
+    Yes!
+
+Does the second child of <html> have to be body?
+
+    Yes!
+
+Can there be more than two children of <html>?
+    
+    No!
+
+What is the valid character set for text nodes?
+
+    Needs to be defined.  But definitely some characters are invalid and
+    need to be escaped e.g. < and >
+
+What happens if a tag is never closed?
+
+    Failure!
+
+    <div>
+        <div
+    </div>
+
+    <abcdefghijklmnopqrstuvwxyz
+
+What happens if a tag pair is never closed?
+
+    Failure!
+
+    <div>
+        <p>
+    </div>
+
+What about comments?
+
+    For now we're not supporting comments.
+
+Can a tag name start with a hyphen?
+    
+    No!
+
+Can tags have any name (w/ valid chars) or do we have a predefined set?
+
+    I should probably define a set
+    {div, p, span, html, head, body, ...}
+
+    But for now we're not dealing w/ it.
+
+Are tag names case sensitive?
+
+    For now, yes.
 
 
+We need to test the case where a closing tag doesn't match its corresponding opening tag.
 
+    <div></p>
 
+Can we prove that the parser will never loop infinitely?
 
+    ?????
 
+What happens to whitespace before the leading html tag?
 
+    It gets removed, but is valid.
 
+What happens to anything after the closing html tag?
 
+    It gets ignored, but is valid.
 
+Other attribute related errors.
 
-
-We need an easier way to test
-
-We need to test the case where a closing tag doesn't match its
-corresponding opening tag.
-
-We need to test the case where a closing tag never appears
-
-We need to test the case where a right angled bracket never appears
-after a left angled bracket
-
-We need to test the case where extra white space exists between attributes
-(should still work)
+    <div class=>
+    <div class= >
+    <div class>
+    <div p>
 
 We need attributes to work with quotes as well as without quotes
 
-We need to handle the case where there is extra text after
-where the final tag should be. (Throw an error or just ignore it?)
-
-Attributes take the form string1=string2 where string1 and string2 do
-not contain whitespace.  If they do we'll throw an error.  Also, attributes
-are delimited by whitespace.
-
-What if the first non-whitespace character of the file is not a '>'?
-
-What if the first tag is not named <html>?
-
-What if the head or body tags are omitted?
-
-What if one of the children of html is something other than body or head?
-
 What if an attribute key is not in our list of valid keys?
 
-Do we simply ignore anything that comes after the closing html tag?
+We need unit tests for all the little functions.
 
-We need unit tests for a the little functions
 
-Need to handle non-closing tags.
-
-What if white space precedes '/' for closing tag?
-    -For now I'm just going to say that the inside of a tag must start
-    with either '/' or a valid tag name character
-
-What if a closing tag contains anything other than whitespace after its name?
-(For example if attributes are defined in a closing tag).
-
-What are the valid characters for a tag name?
-
-What are the valid characters for an attribute name?
-
-What are the valid characters for a value?
-
-(CHECK) If I remove the opening <html> tag from test1.html
-then my parser loops forever.  I need to fix that.
-I'm pretty sure it's because of the whitespace.
