@@ -1,6 +1,7 @@
 import sys
 from collections import deque
-
+from string import ascii_letters, digits, whitespace
+from itertools import zip_longest
 
 class WhitespaceError(Exception):
     pass
@@ -11,8 +12,41 @@ class UnclosedTagError(Exception):
 class PreconditionError(Exception):
     pass
 
+class PostconditionError(Exception):
+    pass
+
 class UnmatchingTagError(Exception):
     pass
+
+class InvalidTagCharacterError(Exception):
+    pass
+
+class InvalidKeyCharacterError(Exception):
+    pass
+
+class InvalidValueCharacterError(Exception):
+    pass
+
+class InvalidValueError(Exception):
+    pass
+
+class MissingClosingQuoteError(Exception):
+    pass
+
+class InvalidTagNameError(Exception):
+    pass
+
+class MissingClosingTagError(Exception):
+    pass
+
+class InvalidAttributeFormatError(Exception):
+    pass
+
+
+VALID_KEY_CHARS = set(ascii_letters + digits)
+VALID_VALUE_CHARS = set(ascii_letters + digits + '-')
+VALID_TAG_CHARS = set(ascii_letters)
+VALID_TEXT_CHARS = set(ascii_letters + digits + whitespace) - set('<>')
 
 # name must be a string
 # attributes musst be a dictionary of strings mapping to strings
@@ -25,26 +59,34 @@ class ElementNode:
         self.children = []
     
     def addChild(self, child):
-        self.children.append(child)
+        self.children.append(child)   
+
+    def shallow_eq(self, other):
+        if not isinstance(other, ElementNode): # ElementNode != TextNode
+            return False
+        elif self.name != other.name: # <p> != <div>
+            return False
+        elif self.attributes != other.attributes: # <p class=x> != <p class=y>
+            return False
+        else:
+            return True
     
+    def breadthFirstIterator(self):
+        queue = deque([self])
+        while len(queue) > 0:
+            node = queue.popleft()
+            yield node
+            if isinstance(node, ElementNode):
+                queue.extend(node.children)
+
     def __eq__(self, other): # breadth-first tree traversal
-        self_queue = deque([self])
-        other_queue = deque([other])
-        while len(self_queue) > 0:
-            self_node = self_queue.popleft()
-            other_node = other_queue.popleft()
-            if isinstance(self_node, ElementNode) and isinstance(other_node, ElementNode):
-                if not (self_node.name == other_node.name and \
-                self_node.attributes == other_node.attributes and \
-                len(self_node.children) == len(other_node.children)):
-                    return False
-                for i in range(len(self_node.children)):
-                    self_queue.append(self_node.children[i])
-                    other_queue.append(other_node.children[i])
-            elif isinstance(self_node, TextNode) and isinstance(other_node, TextNode):
-                if not (self_node == other_node):
-                    return False
-            else: # Wrong types or unmatching types
+        if not isinstance(other, self.__class__):
+            return False
+        self_tree, other_tree = self.breadthFirstIterator(), other.breadthFirstIterator()
+        for self_node, other_node in zip_longest(self_tree, other_tree):
+            if self_node == None or other_node == None: # the lengths are not the same
+                return False
+            elif not self_node.shallow_eq(other_node):
                 return False
         return True
     
@@ -55,13 +97,16 @@ class TextNode:
     def __init__(self, text):
         self.text = text
     
+    def shallow_eq(self, other):
+        return self == other
+    
     def __eq__(self, other):
         if not isinstance(other, TextNode):
             return False
         if not (self.text == other.text):
             return False
         return True
-    
+
     def __repr__(self):
         return self.text
 #parse
@@ -93,7 +138,7 @@ class TextNode:
 
 def parse(html):
     stack = []
-    i = 0
+    i = 0 
     while html[i].isspace(): # white space at the top of an html document is ignored
         i += 1
     while True:
@@ -104,20 +149,20 @@ def parse(html):
 
 def consume_tag(html, i, stack):
     if html[i] != '<': # consume_tag() assumes that i points to an open angled bracket
-        raise Exception('html[i] must refer to an open angled bracket')
+        raise PreconditionError('The precondtion of consume_tag() is that i must be \
+pointed at a "<"')
     if html[i+1].isspace():
         raise WhitespaceError()
     if html[i+1] == '/': # indicates a closing tag
-        tag_name, i = consume_closing_tag(html, i, stack)
-        if html[i] == ' ':
-            raise WhitespaceError()
-        return tag_name, i   
-    return consume_opening_tag(html, i, stack)
+        elem, i = consume_closing_tag(html, i, stack)  
+    else:
+        elem, i = consume_opening_tag(html, i, stack)
+    if html[i] != '>':
+        raise PostconditionError('The postcondtion of consume_tag() is that i must be pointed at a ">"')
+    return elem, i
 
 def consume_opening_tag(html, i, stack):
-    if html[i] != '<':
-        raise Exception('html[i] must refer to an open angled bracket')
-    name, i = get_tag_name(html, i, open=True)
+    name, i = get_opening_tag_name(html, i)
     elem = ElementNode(name)
     if html[i] == ' ':
         attrs, i = get_attributes(html, i)
@@ -126,9 +171,10 @@ def consume_opening_tag(html, i, stack):
     return None, i
 
 def consume_closing_tag(html, i, stack):
-    name, i = get_closing_tag_name(html, i, open=False)
+    name, i = get_closing_tag_name(html, i)
     if name != stack[-1].name: # uh oh
-        raise UnmatchingTagError('tag pair does not match')
+        raise UnmatchingTagError(f'Name of closing tag does "{name}" not match \
+            ')
     else: # we found a valid closing tag
         elem = stack.pop()
         if len(stack) == 0: # finished processing
@@ -138,20 +184,22 @@ def consume_closing_tag(html, i, stack):
             return None, i
 
 # a closing tag name is defined as a sequence of valid tag name characters
-# preced by a '<\' and followed by a '>'
-def get_closing_tag_name(html, i, open):
+# preceded by a '<\' and followed by a '>'
+def get_closing_tag_name(html, i):
     if html[i] != '<':
-        raise PreconditionError('get_closing_tag_name() requires that i \
-                                 be pointed at a \'>\' character')
+        raise PreconditionError('The precondition of get_closing_tag_name() is that i must be \
+pointed at a "<"')
     if html[i+1] != '/':
-        raise PreconditionError('get_closing_tag_name() requires that i+1 \
-                                 be pointed at a \'/\' characer')
-    left, right = i+2, i+2
+        raise PreconditionError('The precondtion of get_closing_tag_name() is that i+1 must be pointed \
+at a "/"')
+    left, right = i+2, i+2 # skip to (hopefully) the first char of the tag name
     while html[right] != '>':
         # TODO: incorporate ALL invalid characters into this code
         if html[right].isspace():
             # catches: </ div> </div > </d iv> </ >
             raise WhitespaceError('No spaces allowed in closing tag.')
+        if html[right] not in VALID_TAG_CHARS:
+            raise InvalidTagCharacterError(f'The character {html[right]} is not a valid tag character.')
         right += 1
         if right >= len(html):
             raise UnclosedTagError('Reached end of file before tag was closed.')
@@ -159,18 +207,22 @@ def get_closing_tag_name(html, i, open):
     if tag_name == '':
         # catches: </>
         raise InvalidTagNameError('Tag name cannot be the empty string')
-    return tag_name, i
+    if html[right] != '>' and html[right] != ' ':
+        raise PostconditionError('The postcondtion of get_closing_tag_name() is that right must be \
+pointed at either a ">" or a " "')
+    return tag_name, right
     
-
 # an opening tag name is defined as a sequence of valid tag name characters
 # preceded by a '<' and followed by a ' ' or a '>'
-def get_opening_tag_name(html, i, open):
+def get_opening_tag_name(html, i):
     if html[i] != '<':
-        raise PreconditionError('get_opening_tag_name() requires that i \
-                                 be pointed at a \'>\' character')
+        raise PreconditionError('The precondition of get_opening_tag_name() is that i must be \
+pointed at a "<"')
     left, right = i+1, i+1
     # either reach the end of the tag or the beginning of the attributes
     while html[right] != '>' and html[right] != ' ':
+        if html[right] not in VALID_TAG_CHARS:
+            raise InvalidTagCharacterError(f'The character {html[right]} is not a valid tag character.')
         right += 1
         if right >= len(html):
             raise UnclosedTagError('Reached end of file before tag was closed.')
@@ -178,70 +230,125 @@ def get_opening_tag_name(html, i, open):
     if tag_name == '':
         # catches: <> < > < class=someclass>
         raise InvalidTagNameError('Tag name cannot be the empty string')
-    return tag_name, i
-
-# # after this function runs, i should be pointed at either a ' ' or a '>'
-# def get_tag_name(html, i, open):
-#     if html[i] != '<':
-#         raise Exception('html[i] must refer to an open angled bracket')
-#     left, right = i+1, i+1
-#     if not open: # we're dealing w/ a closing tag
-#         left, right = left+1, right+1 # skip the slash
-#     while html[right] != '>' and html[right] != ' ':
-#         right += 1
-#         if right >= len(html):
-#             raise Exception('tag was never closed')
-#     elem_name = html[left:right]
-#     if elem_name == '':
-#         raise Exception('element name can\'t be the empty string')
-#     return elem_name, right
+    if html[right] != '>' and html[right] != ' ':
+        raise PostconditionError('The postcondtion of get_opening_tag_name() is that right must be \
+pointed at either a ">" or a " "')
+    return tag_name, right
 
 def consume_text(html, i, stack):
+    if html[i] != '>':
+        raise PreconditionError('The precondition of consume_text() is that i must be pointed \
+at a "<"')
     text, i = get_text(html, i)
     if text != None:
         text_node = TextNode(text)
         stack[-1].addChild(text_node)
+    if html[i] != '<':
+        raise PostconditionError('The postcondition of consume_text() is that i must be pointed at a "<"')
     return i
 
 def get_text(html, i):
     if html[i] != '>':
-        raise Exception('html[i] must refer to a closed angled bracket')
+        raise PreconditionError('The precondition of get_text() is that i must be \
+pointed at a "<"')
     left = i+1
     right = i+1 
     while html[right] != '<':
+        if html[right] not in VALID_TEXT_CHARS:
+            raise InvalidTextCharacterError(f'Character {html[right]} is not a valid text character.')
         right += 1
         if right >= len(html):
-            raise Exception('text is not enclosed by a tag')
+            raise MissingClosingTagError('Reached end of file without finding a closing tag.')
     text = html[left:right]
     text = text.strip()
     if text == '':
         return None, right
+    if html[right] != '<':
+        raise PostconditionError('The postcondition of get_text() is that right must be pointed at a "<"')
     return text, right
 
 def get_attributes(html, i):
     if html[i] != ' ':
-        raise Exception('get_attributes() expects i to be pointed at a space')
+        raise PreconditionError('The precondition of get_attributes() is that i must be \
+pointed at a " "')
     attrs = {}
     while html[i] != '>':
         key, value, i = get_attribute(html, i)
         attrs[key] = value
+    if html[i] != '>':
+        raise PostconditionError('The postcondition of get_attributes() is that i must be \
+pointed at a ">"')
     return attrs, i
 
 def get_attribute(html, i):
     if html[i] != ' ':
-        raise Exception('get_attributes() expects i to be pointed at a space')
+        raise PostconditionError('The precondition of get_attribute() is that i \
+    must be be pointed at a " "')
+    # catches: <div  class=value>, <div >, <div class=value  id=key>
+    # (two spaces in the first and third cases above)
     if html[i+1].isspace() or html[i+1] == '>':
         raise WhitespaceError()
-    j = i
-    while html[j] != '=':
-        j += 1
-        if html[j].isspace():
-            print('x')
+    left = i+1
+    right = i+1
+    # Get key
+    while html[right] != '=':
+        if html[right].isspace(): # catches: <div clas s=value>
             raise WhitespaceError('key name can\'t have a space in it')
-    key = html[i:j]
-    j += 1
-    i = j
-    while html[j] != ' ' and html[j] != '>':
-        j += 1
-    value = html[i:j]
-    return key, value, j
+        elif html[right] == '>': # catches: <div class></div>
+            raise InvalidAttributeError("Expected a =")
+        elif html[right] not in VALID_KEY_CHARS:
+            raise InvalidKeyCharacterError(f'Character {html[right]} is not a valid key character.')
+        right += 1
+    key = html[left:right]
+    right += 1
+    left = right
+    if html[right] == '"':
+        value, right = get_quoted_value(html, left, right)
+    else:
+        value, right = get_unquoted_value(html, left, right)
+    if html[right] != ' ' and html[right] != '>':
+        raise PostconditionError('The postcondition of get_attribute() is that right \
+must be pointed at either a " " or a ">"')
+    return key, value, right
+
+def get_unquoted_value(html, left, right):
+    if html[right] not in VALID_VALUE_CHARS:
+        raise PreconditionError('The precondition of get_unquote_value() is that right must be \
+pointed at a valid value character.')
+    while html[right] != ' ' and html[right] != '>':
+        if html[right] not in VALID_VALUE_CHARS:
+            raise InvalidValueCharacterError(f'Character {html[right]} is not a valid value character.')
+        right += 1
+    value = html[left:right]
+    if value == '': # catches: <div class=></div>, <div class= ></div>, <title class= thetitle>Document</title>
+        raise InvalidValueError('Attribute value cannot be the empty string')
+    if html[right] != ' ' and html[right] != '>':
+        raise PostconditionError('The postcondition of get_unquoted_value() is that right \
+must be pointed at a " " or a ">"')
+    return value, right
+
+def get_quoted_value(html, left, right):
+    if html[right] != '"':
+        raise PreconditionError("The precondition of get_quoted_value() is that right must be \
+pointed at a \"")
+    left, right = left+1, right+1
+    while html[right] != '"':
+        if html[right].isspace():
+            raise WhitespaceError()
+        elif html[right] == '>':
+            raise MissingClosingQuoteError("Expected a \"")
+        elif html[right] not in VALID_VALUE_CHARS:
+            raise InvalidValueCharacterError(f'Character {html[right]} is not a valid value character.')
+        else:
+            right += 1
+    value = html[left:right]
+    right += 1
+    # catches: <div class="value"">, <div class="value"a>
+    if html[right] != ' ' and html[right] != '>':
+        raise InvalidAttributeFormatError('Expected a space " " or a ">"')
+    if value == '': # catches <div class="">
+        raise InvalidValueError('value can\'t be the empty string')
+    if html[right] != ' ' and html[right] != '>':
+        raise PostconditionError('The postcondition of get_unquoted_value() is that right \
+must be pointed at a " " or a ">"')
+    return value, right

@@ -20,10 +20,10 @@ How do we handle whitespace inside of text nodes?
     White space at the right or left ends is removed.
     Also a text node with white space only becomes the empty string.
 
-    <div>    </div> becomes <div></div>
-    <div>   abc</div> becomes <div>abc</div>
-    <div>abc   </div> becomes <div>abc</div>
-    <div>   abc   </div> becomes <div>abc</div>
+    <div>    </div> becomes <div></div> COMPLETE
+    <div>   abc</div> becomes <div>abc</div> COMPLETE
+    <div>abc   </div> becomes <div>abc</div> COMPLETE
+    <div>   abc   </div> becomes <div>abc</div> COMPLETE
 
     <div>a    c</div> does not become <div>a c</div>
 
@@ -43,6 +43,7 @@ Which characters are valid for attribute values?
     BUT we should abstract the valid character set for easy changing.
 
     <div class="name> (should fail)
+    <div class="name""> (should fail)
     <div class='name> (should fail)
     <div class=n@me> (should fail)
 
@@ -156,10 +157,12 @@ What happens to anything after the closing html tag?
 
 Other attribute related errors.
 
-    <div class=>
-    <div class= >
-    <div class>
-    <div p>
+    <div class=> COMPLETE
+    <div class= > COMPLETE
+    <div class> COMPLETE
+
+What if the file is empty?
+    -need a test for this
 
 We need attributes to work with quotes as well as without quotes
 

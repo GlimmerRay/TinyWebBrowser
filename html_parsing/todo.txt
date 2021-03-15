@@ -1,1 +1,17 @@
 Use setters for setting the attributes property
+
+Add preconditions and post conditions to every method in (COMPLETE)
+html_parser.py and give the messages consistent structure.
+
+Next to every exception that's not obvious list a few examples of the types (COMPLETE)
+of errors it catches in the comments.
+
+Come up with proper and consistent error names and messages.
+
+Refer to sets of invalid characters. (COMPLETE)
+
+Make sure error messages don't have unnecessary tabs. (COMPLETE)
+
+Make 'right' and 'i' consistent.
+
+Study HTML specification
