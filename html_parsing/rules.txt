@@ -1,0 +1,9 @@
+Rule #1: Whitespace at the beginning of a document is ignored
+Rule #2: "<" marks the beginning of a tag
+
+
+
+
+
+Errors #1: <> < > < class=someclass>
+Errors #2: </>
